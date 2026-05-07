@@ -1,6 +1,6 @@
 {
   "name": "poro-auth",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "PoroAuth WeGame Helper based on Electron and Vue",
   "main": "./out/main/index.js",
   "author": "example.com",
