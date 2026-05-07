@@ -41,16 +41,16 @@ function createWindow(): void {
 // Single instance lock — quit immediately if another instance is already running
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
-  app.quit()
+  app.exit(0)
+} else {
+  app.on('second-instance', () => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.focus()
+    }
+  })
 }
-
-app.on('second-instance', () => {
-  const win = BrowserWindow.getAllWindows()[0]
-  if (win) {
-    if (win.isMinimized()) win.restore()
-    win.focus()
-  }
-})
 
 import { accountManager } from './services/AccountManager'
 import { ddDriver } from './services/DDDriverService'
@@ -295,7 +295,7 @@ app.whenReady().then(() => {
 
   // Start initial check a few seconds after startup
   setTimeout(() => {
-    updateService.checkUpdate().catch(err => {
+    updateService.checkUpdate().catch((err) => {
       console.warn('Silent startup update check failed:', err)
     })
   }, 3000)
