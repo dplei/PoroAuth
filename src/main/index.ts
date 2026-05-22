@@ -58,6 +58,7 @@ import { loginFlowAction } from './services/LoginFlowAction'
 import { configManager } from './services/ConfigManager'
 import { wegameCoordinator } from './services/WegameCoordinator'
 import { updateService } from './services/UpdateService'
+import { flowRecorderService } from './services/FlowRecorderService'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -260,6 +261,16 @@ app.whenReady().then(() => {
 
   ipcMain.handle('save-flow-config', (_, newConfig: Record<string, number>) => {
     configManager.set('flowConfig', newConfig)
+    return { success: true }
+  })
+
+  // --- Flow Recorder API (POC) ---
+  ipcMain.handle('start-coordinate-capture', () => {
+    return flowRecorderService.startCapture()
+  })
+
+  ipcMain.handle('stop-coordinate-capture', () => {
+    flowRecorderService.stopCapture()
     return { success: true }
   })
 

@@ -27,6 +27,16 @@ const api = {
   onLoginProgress: (callback: (msg: string) => void) => {
     ipcRenderer.on('login-progress', (_event, msg) => callback(msg))
   },
+
+  // --- Flow Recorder API (POC) ---
+  startCoordinateCapture: () => ipcRenderer.invoke('start-coordinate-capture'),
+  stopCoordinateCapture: () => ipcRenderer.invoke('stop-coordinate-capture'),
+  onCoordinateCaptured: (callback: (data: any) => void) => {
+    ipcRenderer.on('coordinate-captured', (_event, data) => callback(data))
+  },
+  offCoordinateCaptured: () => {
+    ipcRenderer.removeAllListeners('coordinate-captured')
+  },
   minimizeWindow: () => ipcRenderer.send('window-minimize'),
   closeWindow: () => ipcRenderer.send('window-close'),
 

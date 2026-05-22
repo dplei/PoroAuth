@@ -21,6 +21,13 @@ declare global {
       saveFlowConfig: (conf: Record<string, number>) => Promise<{ success: boolean }>
       startLogin: (id: string) => Promise<{ success: boolean, error?: string }>
       onLoginProgress: (callback: (msg: string) => void) => void
+
+      // --- Flow Recorder API (POC) ---
+      startCoordinateCapture: () => Promise<{ success: boolean; error?: string }>
+      stopCoordinateCapture: () => Promise<{ success: boolean }>
+      onCoordinateCaptured: (callback: (data: { relX: number; relY: number; absX: number; absY: number } | null) => void) => void
+      offCoordinateCaptured: () => void
+
       minimizeWindow: () => void
       closeWindow: () => void
 
