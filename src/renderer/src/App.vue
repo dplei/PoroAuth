@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { createDiscreteApi, darkTheme, dateZhCN, NConfigProvider, zhCN } from 'naive-ui'
-import { computed, onMounted, ref } from 'vue'
+import { createDiscreteApi, darkTheme, dateZhCN, NButton, NConfigProvider, zhCN } from 'naive-ui'
+import { computed, h, onMounted, ref } from 'vue'
 import AccountGrid from './components/AccountGrid.vue'
 import AddAccountModal from './components/AddAccountModal.vue'
 import BanAccountModal from './components/BanAccountModal.vue'
@@ -243,23 +243,45 @@ const handleSelectAccount = async (acc: Account) => {
 
   const isRunning = await window.api.checkWegameRunning()
   if (isRunning) {
-    const userConfirms = await new Promise<boolean>((resolve) => {
-      dialog.warning({
+    const userChoice = await new Promise<'kill' | 'direct' | 'cancel'>((resolve) => {
+      const d = dialog.create({
         title: '进程干涉检测',
         content:
-          'WeGame 正在运行！为了保证物理通信顺利防串号，需要先为您掐断当前大厅并抹除状态重启。\n\n是否授权强制退出？',
-        positiveText: '授权强制退出',
-        negativeText: '取消',
-        onPositiveClick: () => resolve(true),
-        onNegativeClick: () => resolve(false),
-        onClose: () => resolve(false)
+          'WeGame 正在运行！为了保证物理通信顺利防串号，需要先为您掐断当前大厅并抹除状态重启。\n\n是否授权强制退出？或选择直接注入当前窗口。',
+        closable: false,
+        closeOnEsc: false,
+        maskClosable: false,
+        action: () => [
+          h(NButton, {
+            onClick: () => { d.destroy(); resolve('cancel') },
+            style: { marginRight: '8px' }
+          }, { default: () => '取消' }),
+          h(NButton, {
+            onClick: () => { d.destroy(); resolve('direct') },
+            type: 'warning',
+            style: { marginRight: '8px' }
+          }, { default: () => '直接注入' }),
+          h(NButton, {
+            onClick: () => { d.destroy(); resolve('kill') },
+            type: 'primary'
+          }, { default: () => '授权强制退出' })
+        ]
       })
     })
-    if (!userConfirms) {
+
+    if (userChoice === 'cancel') {
       isLoggingIn.value = false
       targetAccountForLogin.value = null
       return
     }
+
+    if (userChoice === 'direct') {
+      loginProgress.value = '准备物理注入流程...'
+      proceedToInject()
+      return
+    }
+
+    // userChoice === 'kill' — 走原有 kill + restart 流程
   }
 
   loginProgress.value = isRunning ? '正在掐断并重启 WeGame...' : '即将唤起 WeGame 客户端...'
