@@ -1,5 +1,10 @@
 <template>
   <div class="account-grid">
+    <div class="account-card glass add-card" @click="$emit('add')">
+      <div class="add-icon">+</div>
+      <span>添加新账号</span>
+    </div>
+
     <div
       v-for="acc in accounts"
       :key="acc.id"
@@ -66,10 +71,6 @@
       </div>
     </div>
 
-    <div class="account-card glass add-card" @click="$emit('add')">
-      <div class="add-icon">+</div>
-      <span>添加新账号</span>
-    </div>
   </div>
 </template>
 

@@ -21,6 +21,7 @@ interface Account {
 }
 
 type SortMode = 'addTime' | 'availability'
+type SortDirection = 'asc' | 'desc'
 
 // NaiveUI Discrete API — 用于在模板外触发 message / dialog
 const { message, dialog } = createDiscreteApi(['message', 'dialog'], {
@@ -30,6 +31,7 @@ const { message, dialog } = createDiscreteApi(['message', 'dialog'], {
 // ── 账号列表 ────────────────────────────────────────────────
 const accounts = ref<Account[]>([])
 const sortMode = ref<SortMode>('addTime')
+const sortDirection = ref<SortDirection>('asc')
 
 const loadAccounts = async () => {
   accounts.value = await window.api.getAccounts()
@@ -38,14 +40,35 @@ const loadAccounts = async () => {
 const sortedAccounts = computed(() => {
   const now = Date.now()
   const isBanned = (acc: Account) => !!acc.bannedUntil && acc.bannedUntil > now
-  return [...accounts.value].sort((a, b) => {
-    if (sortMode.value === 'availability') {
-      const diff = (isBanned(a) ? 1 : 0) - (isBanned(b) ? 1 : 0)
-      if (diff !== 0) return diff
-    }
-    return (a.createdAt ?? 0) - (b.createdAt ?? 0)
-  })
+  const direction = sortDirection.value === 'asc' ? 1 : -1
+
+  return accounts.value
+    .map((account, index) => ({ account, index }))
+    .sort((a, b) => {
+      if (sortMode.value === 'availability') {
+        return (
+          ((isBanned(a.account) ? 1 : 0) - (isBanned(b.account) ? 1 : 0)) * direction
+        )
+      }
+
+      const timeDifference =
+        a.account.createdAt != null && b.account.createdAt != null
+          ? a.account.createdAt - b.account.createdAt
+          : a.index - b.index
+      return timeDifference * direction
+    })
+    .map(({ account }) => account)
 })
+
+const handleSort = (mode: SortMode): void => {
+  if (sortMode.value === mode) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+
+  sortMode.value = mode
+  sortDirection.value = 'asc'
+}
 
 // ── 弹窗状态 ────────────────────────────────────────────────
 const showAddModal = ref(false)
@@ -449,16 +472,24 @@ const handleClose = () => window.api.closeWindow()
             <button
               class="sort-btn"
               :class="{ active: sortMode === 'addTime' }"
-              @click="sortMode = 'addTime'"
+              :title="`按添加时间${sortMode === 'addTime' && sortDirection === 'desc' ? '降序' : '升序'}排列`"
+              @click="handleSort('addTime')"
             >
               添加时间
+              <span v-if="sortMode === 'addTime'" class="sort-direction" aria-hidden="true">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
             </button>
             <button
               class="sort-btn"
               :class="{ active: sortMode === 'availability' }"
-              @click="sortMode = 'availability'"
+              :title="`按可用性${sortMode === 'availability' && sortDirection === 'desc' ? '降序' : '升序'}排列`"
+              @click="handleSort('availability')"
             >
               可用性
+              <span v-if="sortMode === 'availability'" class="sort-direction" aria-hidden="true">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
             </button>
           </div>
         </div>
@@ -703,6 +734,13 @@ const handleClose = () => window.api.closeWindow()
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
+}
+
+.sort-direction {
+  display: inline-block;
+  width: 0.8rem;
+  margin-left: 0.15rem;
+  font-weight: 700;
 }
 
 .sort-btn + .sort-btn {
