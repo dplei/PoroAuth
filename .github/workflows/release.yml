@@ -39,7 +39,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          # 自动生成 release 页面
+          # release 正文 = 仓库根的 RELEASE_NOTES.md（electron-updater 取此文本作为 releaseNotes，
+          # 显示在应用的「发现新版本」弹窗里）。每次发版前更新此文件。
+          body_path: RELEASE_NOTES.md
+          # 在自定义正文之后追加 GitHub 自动生成的 commit/PR changelog
           generate_release_notes: true
           # 提取打包出来的所有 exe、zip 以及必须的 latest.yml 给更新服务使用
           files: |
