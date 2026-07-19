@@ -1,17 +1,151 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* ─────────────────────────────────────────────────────────────
+   PoroAuth · Token 层
+   事实源：design-system/poroauth/MASTER.md §2
+   后续 phase 只消费 token，不新增。
+   ───────────────────────────────────────────────────────────── */
 
-:root {
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-  --surface-color: rgba(255, 255, 255, 0.05);
-  --surface-hover: rgba(255, 255, 255, 0.1);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent-color: #6366f1;
-  --accent-hover: #4f46e5;
-  --danger-color: #ef4444;
+/* ── 字体：本地自托管（Electron 断网可用；CSP 也禁止远程样式表） ──
+   Plus Jakarta Sans v12 由 Google 以可变字体分发，
+   400–800 全字重共用同一个 woff2，故一条 @font-face 覆盖整段字重轴。 */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('./fonts/plus-jakarta-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
 }
 
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('./fonts/plus-jakarta-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ── 语义 token · 浅色（默认） · MASTER §2.1 ── */
+:root {
+  /* 表面 */
+  --bg-app: #f4f4f8;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #ffffff;
+  --bg-inset: #e9e9ef;
+  --bg-elevated: #ffffff;
+
+  /* 文字 */
+  --text-primary: #1e1b4b;
+  --text-secondary: #4b5563; /* 原 #6b7280 压 --bg-app 仅 4.41:1，不达 MASTER §7 */
+  --text-tertiary: #9ca3af; /* 仅装饰/占位，对比度不足以承载正文 */
+
+  /* 描边 */
+  --border-subtle: #e5e7eb;
+  --border-strong: #d1d5db;
+
+  /* 品牌 */
+  --accent: #4f46e5; /* 原 #6366f1 白字压它仅 4.47:1、压 --bg-app 仅 4.07:1 */
+  --accent-hover: #4338ca;
+  --accent-fg: #ffffff;
+  --accent-soft: #eef2ff;
+
+  /* 弹窗遮罩底 · MASTER §4.5
+     §4.5 原把这个值写死在组件里，与 §6「组件内不写死 hex」冲突；
+     P4/P5/P6 共 8 个弹窗都要用它 → 提为 token。 */
+  --scrim: rgba(15, 23, 42, 0.4);
+
+  /* 状态 */
+  --success: #059669;
+  --success-soft: #ecfdf5;
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+
+  /* 阴影：极柔和环境阴影，不是硬投影 */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-md:
+    0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.06);
+  --shadow-lg:
+    0 2px 4px rgba(16, 24, 40, 0.04), 0 12px 28px rgba(16, 24, 40, 0.1);
+  --shadow-xl:
+    0 8px 16px rgba(16, 24, 40, 0.06), 0 24px 48px rgba(16, 24, 40, 0.14);
+}
+
+/* ── 语义 token · 深色 · MASTER §2.1 ──
+   底色走 GitHub Dark（Primer）冷中性灰，取代原 slate-900 蓝调。 */
+:root[data-theme='dark'] {
+  --bg-app: #0d1117; /* canvas.default */
+  --bg-surface: #161b22; /* canvas.subtle */
+  --bg-surface-hover: #21262d;
+  --bg-inset: #010409; /* canvas.inset */
+  --bg-elevated: #161b22; /* canvas.overlay */
+
+  --text-primary: #e6edf3; /* fg.default */
+  --text-secondary: #8b949e; /* fg.muted */
+  --text-tertiary: #6e7681; /* fg.subtle，仍仅装饰/占位：压 --bg-surface 3.76:1 */
+
+  --border-subtle: #21262d; /* border.muted */
+  --border-strong: #30363d; /* border.default */
+
+  --accent: #818cf8;
+  --accent-hover: #a5b4fc;
+  --accent-fg: #0f172a;
+  --accent-soft: rgba(99, 102, 241, 0.15);
+
+  /* 浅色的 slate 0.4 压在 #0d1117 上几乎看不出遮罩 → 深色改走 canvas.inset 并加浓 */
+  --scrim: rgba(1, 4, 9, 0.6);
+
+  --success: #34d399;
+  --success-soft: rgba(16, 185, 129, 0.15);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.15);
+  --danger: #f87171;
+  --danger-soft: rgba(239, 68, 68, 0.15);
+
+  /* 深色下靠表面提亮做层级，阴影仅用于弹窗 */
+  --shadow-sm: none;
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.24);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.32);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.44);
+}
+
+/* ── 尺度 token · MASTER §2.2 ── */
+:root {
+  /* 间距 (Density 5/10) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* 字号（桌面密度，body 14px，下限 12px） */
+  --text-display: 32px;
+  --text-h2: 20px;
+  --text-h3: 16px;
+  --text-body: 14px;
+  --text-sm: 13px;
+  --text-xs: 12px;
+
+  /* 动效 (Motion 4/10 Standard) */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration: 250ms;
+}
+
+/* ── Reset ── */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -19,65 +153,84 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: var(--bg-gradient);
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: var(--text-body);
+  background: var(--bg-app);
   color: var(--text-primary);
   min-height: 100vh;
   overflow: hidden;
   user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Glassmorphism utility */
-.glass {
-  background: var(--surface-color);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+/* ── 主题切换 ──────────────────────────────────────────────
+   两件事，缺一不可：
+
+   1) 翻转本身必须是原子的。元素级 transition 是给 hover 写的（实测 68 个元素、
+      150ms 与 250ms 两档），若放任其参与主题翻转，同一次切换会分三批到达
+      （文字 0ms、一批 150ms、一批 250ms）→ 即用户报的「有延迟、顿挫感」。
+      useTheme.apply() 会在换色的一瞬打上 data-theme-switching，由下面的规则禁掉全部过渡。
+
+   2) 动效交给 View Transition 的圆形揭示（useTheme.toggleTheme），
+      而不是让每个元素各自 crossfade。
+   ───────────────────────────────────────────────────────── */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
 }
 
-/* Base button styles */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  background: var(--surface-hover);
-  color: var(--text-primary);
+/* 默认的新旧层 crossfade 会和 clip-path 揭示打架 → 关掉，只留我们自己的动画。
+   z-index 决定谁盖在上面被裁：转亮时新层在上正向扩张，转暗时旧层在上反向收缩。
+   ⚠️ 本项目主题挂在 :root[data-theme]（非 antfu 原版的 .dark 类），选择器已相应改写；
+   这里的配对必须与 useTheme.toggleTheme 里 pseudoElement 的选择一致，对不上揭示方向就反了。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
 
-.btn:hover {
-  background: rgba(255,255,255,0.15);
+::view-transition-old(root) {
+  z-index: 1;
 }
 
-.btn-primary {
-  background: var(--accent-color);
+::view-transition-new(root) {
+  z-index: 9999;
 }
 
-.btn-primary:hover {
-  background: var(--accent-hover);
+:root[data-theme='dark']::view-transition-old(root) {
+  z-index: 9999;
 }
 
-.btn-danger {
-  background: transparent;
-  color: var(--danger-color);
-}
-.btn-danger:hover {
-  background: rgba(239, 68, 68, 0.1);
+:root[data-theme='dark']::view-transition-new(root) {
+  z-index: 1;
 }
 
-/* Focus states */
+/* ── naive-ui 弹窗遮罩 · MASTER §4.5 ──
+   NModal / discrete dialog 的遮罩被 teleport 到 body，scoped 样式够不到，故在全局统一：
+   1) top:48px —— 不盖住 48px 自绘标题栏，否则弹窗期窗口既拖不动也点不到最小化/关闭
+      （手写遮罩已在各组件 scoped 里 top:48px，这里补齐 naive 的那几个）；
+   2) 背景换 --scrim + blur，与手写遮罩同底，双主题一致。
+   message 容器是另一套类名（.n-message-container），不受影响。 */
+.n-modal-mask,
+.n-modal-body-wrapper {
+  top: 48px !important;
+}
+
+.n-modal-mask {
+  background-color: var(--scrim) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* ── 焦点态 ── */
 *:focus-visible {
-  outline: 2px solid var(--accent-color);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* Scrollbar */
+/* ── 滚动条 ── */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -86,9 +239,21 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
+  background: var(--border-strong);
+  border-radius: var(--radius-sm);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: var(--text-tertiary);
+}
+
+/* ── 动效降级 · MASTER §5 ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

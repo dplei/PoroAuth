@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircle } from 'lucide-vue-next'
+import { CheckCircle, Sparkles, X } from 'lucide-vue-next'
 const props = defineProps<{
   show: boolean
   status: 'available' | 'downloading' | 'downloaded' | 'error' | null
@@ -35,21 +35,17 @@ const formatReleaseNotes = (notes: any) => {
 
 <template>
   <div v-if="show" class="modal-overlay" @click.self="status !== 'downloading' && emit('close')">
-    <div class="modal-content glass">
+    <div class="modal-content">
       <div class="modal-header">
-        <h3>🎉 发现新版本</h3>
-        <button v-if="status !== 'downloading'" class="close-btn" @click="emit('close')">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+        <h3><Sparkles :size="20" class="title-icon" /> 发现新版本</h3>
+        <button
+          v-if="status !== 'downloading'"
+          type="button"
+          class="close-btn"
+          aria-label="关闭"
+          @click="emit('close')"
+        >
+          <X :size="20" />
         </button>
       </div>
 
@@ -91,8 +87,8 @@ const formatReleaseNotes = (notes: any) => {
       <div class="modal-footer">
         <button
           v-if="status === 'available' || status === 'error'"
+          type="button"
           class="btn"
-          style="background: rgba(255, 255, 255, 0.1)"
           @click="emit('close')"
         >
           稍后再说
@@ -100,20 +96,21 @@ const formatReleaseNotes = (notes: any) => {
 
         <button
           v-if="status === 'available' || status === 'error'"
+          type="button"
           class="btn btn-primary"
           @click="emit('download')"
         >
           立刻下载更新
         </button>
 
-        <button v-if="status === 'downloading'" class="btn btn-primary" disabled>
+        <button v-if="status === 'downloading'" type="button" class="btn btn-primary" disabled>
           正在下载中...
         </button>
 
         <button
           v-if="status === 'downloaded'"
+          type="button"
           class="btn btn-primary"
-          style="background: #10b981"
           @click="emit('install')"
         >
           立即重启并安装
@@ -126,29 +123,32 @@ const formatReleaseNotes = (notes: any) => {
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 0;
+  top: 48px; /* 不盖 48px 自绘标题栏（MASTER §4.5），否则弹窗期窗口拖不动、点不到最小化/关闭 */
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--scrim);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 100;
+  animation: fadeIn var(--duration-fast) var(--ease);
 }
 
 .modal-content {
-  background: #1e293b;
+  background: var(--bg-elevated);
+  border: 1px solid transparent; /* 浅色占位；深色补描边拉开层级（§4.5） */
   width: 460px;
   max-width: 90vw;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.5),
-    0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
   overflow: hidden;
-  animation: slideUp 0.3s ease-out;
+  animation: slideUp var(--duration) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root[data-theme='dark'] .modal-content {
+  border-color: var(--border-subtle);
 }
 
 @keyframes slideUp {
@@ -162,9 +162,18 @@ const formatReleaseNotes = (notes: any) => {
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .modal-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -172,52 +181,60 @@ const formatReleaseNotes = (notes: any) => {
 
 .modal-header h3 {
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
   color: var(--text-primary);
-  font-size: 1.25rem;
+  font-size: var(--text-h2);
+  font-weight: 700;
+}
+
+.title-icon {
+  color: var(--accent);
+  flex-shrink: 0;
 }
 
 .close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.25rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-inset);
   color: var(--text-primary);
 }
 
-.close-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
 .modal-body {
-  padding: 1.5rem;
+  padding: var(--space-lg);
 }
 
 .version-tag {
   display: inline-block;
-  background: rgba(99, 102, 241, 0.2);
-  color: var(--accent-color);
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.85rem;
+  background: var(--accent-soft);
+  color: var(--accent); /* accent 压 accent-soft 5.62/5.49 ✅（MASTER §2.4） */
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-md);
 }
 
 .release-notes {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 1rem;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
   max-height: 200px;
   overflow-y: auto;
 }
@@ -226,103 +243,123 @@ const formatReleaseNotes = (notes: any) => {
   margin: 0;
   white-space: pre-wrap;
   font-family: inherit;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+  font-size: var(--text-body);
+  color: var(--text-secondary); /* 压 --bg-inset 6.25/6.68 ✅ */
   line-height: 1.6;
 }
 
 .download-progress {
-  padding: 1rem 0;
+  padding: var(--space-md) 0;
 }
 
 .progress-bar-container {
   height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 9999px;
+  background: var(--bg-inset);
+  border-radius: var(--radius-full);
   overflow: hidden;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-sm);
 }
 
+/* 进度宽度即数据本身，transition width 属功能反馈（非 §5 装饰动画），保留 */
 .progress-bar-fill {
   height: 100%;
-  background: var(--accent-color);
-  border-radius: 9999px;
+  background: var(--accent);
+  border-radius: var(--radius-full);
   transition: width 0.2s ease-out;
 }
 
 .progress-stats {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
 .success-message {
   text-align: center;
-  padding: 1.5rem 0;
+  padding: var(--space-lg) 0;
 }
 
 .check-circle-wrapper {
   display: inline-flex;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-md);
   animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }
 
 .check-icon {
-  color: #10b981;
-  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+  color: var(--success); /* 图标（非文字），--success 达标（MASTER §2.4） */
 }
 
 @keyframes popIn {
-  0% { opacity: 0; transform: scale(0.4); }
-  80% { transform: scale(1.1); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  80% {
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .success-message p {
   color: var(--text-primary);
   font-weight: 500;
-  font-size: 1.1rem;
+  font-size: var(--text-h3);
 }
 
 .error-message {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-left: 4px solid var(--danger-color);
-  border-radius: 6px;
-  padding: 1rem;
-  margin-top: 1rem;
+  background: var(--danger-soft);
+  border: 1px solid transparent;
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  margin-top: var(--space-md);
 }
 
 .error-message p {
-  margin: 0 0 0.5rem 0;
-  color: var(--danger-color);
-  font-size: 0.9rem;
-  font-weight: bold;
+  margin: 0 0 var(--space-sm) 0;
+  /* soft 底扛不住 --danger 文字（浅色 4.41:1）→ 文字走 --text-primary（MASTER §2.4） */
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: 700;
 }
 
 .error-message code {
-  color: #fca5a5;
-  font-size: 0.8rem;
+  color: var(--text-secondary); /* 压 --danger-soft 6.91/5.36 ✅ */
+  font-size: var(--text-sm);
   word-break: break-all;
 }
 
 .modal-footer {
-  padding: 1.25rem 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--border-subtle);
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: var(--space-md);
 }
 
 .btn {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: var(--text-body);
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  color: white;
+  transition:
+    background var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    filter var(--duration-fast) var(--ease);
+  background: var(--bg-inset);
+  color: var(--text-primary);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-subtle);
 }
 
 .btn:disabled {
@@ -331,10 +368,13 @@ const formatReleaseNotes = (notes: any) => {
 }
 
 .btn-primary {
-  background: var(--accent-color);
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-fg); /* 不继承 --text-primary：浅色下深字压靛蓝仅 3.3:1 */
 }
 
 .btn-primary:hover:not(:disabled) {
-  filter: brightness(1.1);
+  background: var(--accent-hover);
+  border-color: transparent;
 }
 </style>

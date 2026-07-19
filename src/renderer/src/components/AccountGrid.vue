@@ -1,80 +1,66 @@
 <template>
   <div class="account-grid">
-    <div class="account-card glass add-card" @click="$emit('add')">
-      <div class="add-icon">+</div>
+    <button class="add-card" @click="$emit('add')">
+      <Plus :size="28" :stroke-width="1.5" />
       <span>添加新账号</span>
-    </div>
+    </button>
 
     <div
       v-for="acc in accounts"
       :key="acc.id"
-      class="account-card glass"
-      :class="{ banned: isBanned(acc) }"
+      class="account-card"
+      :class="{ 'account-card--banned': isBanned(acc) }"
       @click="!isBanned(acc) && $emit('select', acc)"
     >
-      <div class="card-header">
-        <span class="account-name">{{ acc.name }}</span>
-        <div class="actions-group">
-          <!-- Edit Button -->
+      <div class="card-head">
+        <div class="card-head__ident">
+          <h3 class="account-name" :title="acc.name">{{ acc.name }}</h3>
+          <span class="account-id" :title="acc.account">{{ acc.account }}</span>
+        </div>
+        <span class="card-cue" aria-hidden="true">
+          <ArrowUpRight :size="16" />
+        </span>
+      </div>
+
+      <!-- MASTER §2.4 配方：soft 底 + 主色描边 + text-primary 文字，主色只碰图标 -->
+      <span class="status-chip" :class="{ 'status-chip--banned': isBanned(acc) }">
+        <ShieldBan v-if="isBanned(acc)" :size="12" class="status-chip__icon" />
+        <CircleCheck v-else :size="12" class="status-chip__icon" />
+        {{ getStatusText(acc) }}
+      </span>
+
+      <div class="card-foot">
+        <span class="login-text">上次登录：{{ getLoginTimeText(acc) }}</span>
+        <div class="card-actions">
           <button
-            class="btn btn-icon btn-edit"
+            class="action-btn action-btn--edit"
             title="修改备注"
             @click.stop="$emit('edit-name', acc)"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M12 20h9"></path>
-              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-            </svg>
+            <Pencil :size="15" />
           </button>
-          <!-- Ban Button -->
           <button
-            class="btn btn-icon btn-ban"
+            class="action-btn action-btn--ban"
             title="设置封禁/防误触期"
             @click.stop="$emit('set-ban', acc)"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
+            <ShieldBan :size="15" />
           </button>
-          <!-- Delete Button -->
           <button
-            class="btn btn-icon btn-danger delete-btn"
+            class="action-btn action-btn--delete"
             title="删除账号"
             @click.stop="$emit('delete', acc.id)"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path
-                d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
-              ></path>
-            </svg>
+            <Trash2 :size="15" />
           </button>
         </div>
       </div>
-      <div class="card-body">
-        <span class="account-id">{{ acc.account }}</span>
-      </div>
-      <div class="card-footer">
-        <div class="footer-row">
-          <div :class="['status-indicator', { 'banned-indicator': isBanned(acc) }]"></div>
-          <span class="status-text">{{ getStatusText(acc) }}</span>
-        </div>
-        <div class="footer-row login-info">
-          <span class="login-text">上次登录：{{ getLoginTimeText(acc) }}</span>
-        </div>
-      </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
+import { ArrowUpRight, CircleCheck, Pencil, Plus, ShieldBan, Trash2 } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -140,183 +126,252 @@ const getLoginTimeText = (acc: Account): string => {
 .account-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem 0;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
 }
 
+/* ── 卡片 · MASTER §4.1 ──
+   浅色下无描边，深色下补 --border-subtle，否则卡片糊进底色。
+   浅色用 transparent 描边占位而非 border: none —— 两个主题盒模型一致，
+   切主题时不会因描边挤占 1px 而整格重排。 */
 .account-card {
-  padding: 1.25rem;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  position: relative;
-  overflow: hidden;
+  align-items: flex-start;
+  /* 瓦片撤走后省下的一行不还给高度，而是摊成呼吸感：块间距 8px → 16px */
+  gap: var(--space-md);
+  min-height: 208px;
+  padding: var(--space-lg);
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition:
+    transform var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease),
+    border-color var(--duration) var(--ease);
 }
 
-.account-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+:root[data-theme='dark'] .account-card {
+  border-color: var(--border-subtle);
 }
 
-.account-card:hover:not(.banned) {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
-  border-color: rgba(255, 255, 255, 0.2);
+.account-card:hover:not(.account-card--banned) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
-.account-card:hover:not(.banned)::before {
-  opacity: 1;
+/* 深色下 --shadow-lg 几乎不可见 → 靠描边提亮补 hover 反馈 */
+:root[data-theme='dark'] .account-card:hover:not(.account-card--banned) {
+  border-color: var(--border-strong);
 }
 
-/* Banned Styles */
-.banned {
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(0, 0, 0, 0.4);
+/* ── 封禁态 ──
+   原 filter: grayscale(0.6) 在浅色下发灰发脏，且把文字对比度一起拖垮。
+   改走 --danger-soft 底：文字仍是 --text-primary（实测 14.61 浅 / 13.94 深），
+   语义由底色 + chip 承载，不靠降饱和。 */
+.account-card--banned {
+  background: var(--danger-soft);
   cursor: not-allowed;
-  filter: grayscale(0.6);
 }
 
-.banned-indicator {
-  background-color: var(--danger-color) !important;
-  box-shadow: 0 0 8px var(--danger-color) !important;
-}
-
-.card-header {
+/* 名称 + 账号占左，↗ 顶右对齐。
+   用户决策：原 MASTER §4.1 的 44×44 图标瓦片已撤（见 REDESIGN-PLAN P3 回写）。 */
+.card-head {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+/* min-width: 0 是省略号的前提：flex 子项默认 min-width: auto，不肯收缩到内容以下 */
+.card-head__ident {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+/* 右上 ↗：点击登录的暗示。整卡可点，故是装饰而非按钮 */
+.card-cue {
+  display: inline-flex;
   align-items: center;
-  z-index: 1;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-inset);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  transition:
+    background var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.account-card:hover:not(.account-card--banned) .card-cue {
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 
 .account-name {
-  font-size: 1.1rem;
-  font-weight: 600;
+  max-width: 100%;
   color: var(--text-primary);
-}
-
-.actions-group {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.btn-icon {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--text-secondary);
-  padding: 0.25rem;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.account-card:hover .btn-icon {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.btn-icon svg {
-  width: 16px;
-  height: 16px;
-}
-
-.btn-edit {
-  color: #3b82f6;
-}
-.btn-edit:hover {
-  background: rgba(59, 130, 246, 0.2);
-}
-
-.btn-ban {
-  color: #fbbf24;
-}
-.btn-ban:hover {
-  background: rgba(251, 191, 36, 0.2);
-}
-
-.delete-btn {
-  color: var(--danger-color);
-}
-.delete-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-}
-
-.card-body {
-  z-index: 1;
+  font-size: var(--text-h3);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .account-id {
-  font-family: monospace;
-  font-size: 0.9rem;
+  max-width: 100%;
+  padding: 2px var(--space-sm);
+  background: var(--bg-inset);
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  background: rgba(0, 0, 0, 0.2);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.card-footer {
+/* ── 状态 chip · MASTER §2.4 配方 ──
+   浅色下 --success 压 --success-soft 仅 3.58:1、--danger 压 --danger-soft 仅 4.41:1，
+   两者都扛不住文字 → 文字一律 --text-primary，主色只留给图标与描边（非文字，3:1 即可）。 */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 100%;
+  padding: 2px var(--space-sm) 2px 6px;
+  background: var(--success-soft);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-chip__icon {
+  flex: none;
+  color: var(--success);
+}
+
+/* 封禁卡底已是 --danger-soft，chip 再用 soft 底会糊在一起 → 反相为 --bg-surface */
+.status-chip--banned {
+  background: var(--bg-surface);
+  border-color: var(--danger);
+}
+
+.status-chip--banned .status-chip__icon {
+  color: var(--danger);
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  width: 100%;
+  margin-top: auto;
+}
+
+/* 原为 --text-tertiary，浅色 2.54:1 / 深色 3.76:1，双主题均不达标 */
+.login-text {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 操作按钮 ──
+   原为 opacity: 0，只有 hover 才现形 —— 触屏与键盘用户永远发现不了。
+   改为常驻，静息态走 --text-secondary（压 --bg-surface 7.56 浅 / 5.62 深），
+   语义色留到 hover/focus 再上。 */
+.card-actions {
+  display: flex;
+  flex: none;
+  gap: var(--space-xs);
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.action-btn--edit:hover,
+.action-btn--edit:focus-visible {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.action-btn--ban:hover,
+.action-btn--ban:focus-visible {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.action-btn--delete:hover,
+.action-btn--delete:focus-visible {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* ── 添加卡 ──
+   用 button 而非 div：白捡键盘可达与语义 */
+.add-card {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-top: auto;
-  color: var(--text-secondary);
-  z-index: 1;
-}
-
-.footer-row {
-  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-}
-
-.login-info {
-  font-size: 0.75rem;
-  color: var(--text-tertiary, rgba(255, 255, 255, 0.6));
-}
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #10b981;
-  box-shadow: 0 0 8px #10b981;
-}
-
-/* Add Card styles */
-.add-card {
-  border-style: dashed;
-  border-width: 2px;
-  background: transparent;
   justify-content: center;
-  align-items: center;
+  gap: var(--space-sm);
+  min-height: 208px;
+  padding: var(--space-lg);
+  background: transparent;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
   color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--text-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
 }
 
 .add-card:hover {
-  color: var(--text-primary);
-  border-color: var(--accent-color);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.add-icon {
-  font-size: 2rem;
-  font-weight: 300;
-  margin-bottom: 0.5rem;
+/* 全局 reduce 块只把时长压到 0.01ms，位移照样发生（只是瞬时）→ 显式取消 */
+@media (prefers-reduced-motion: reduce) {
+  .account-card:hover:not(.account-card--banned) {
+    transform: none;
+  }
 }
 </style>

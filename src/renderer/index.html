@@ -8,6 +8,8 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
     />
+    <!-- 同步执行，务必留在 head 且不要加 defer/module：需在首次绘制前定好主题 -->
+    <script src="./theme-init.js"></script>
   </head>
 
   <body>

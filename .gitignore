@@ -6,3 +6,5 @@ out
 *.log*
 
 .claude/*
+# Python 字节码（图标生成脚本产生）
+__pycache__/

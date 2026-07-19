@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { createDiscreteApi, darkTheme, dateZhCN, NButton, NConfigProvider, zhCN } from 'naive-ui'
+import { ArrowDown, ArrowUp, Link2, Minus, Moon, Settings, Sun, X } from 'lucide-vue-next'
+import { createDiscreteApi, dateZhCN, NButton, NConfigProvider, zhCN } from 'naive-ui'
 import { computed, h, onMounted, ref } from 'vue'
+import { useTheme } from './composables/useTheme'
 import AccountGrid from './components/AccountGrid.vue'
 import AddAccountModal from './components/AddAccountModal.vue'
 import BanAccountModal from './components/BanAccountModal.vue'
@@ -23,9 +25,18 @@ interface Account {
 type SortMode = 'addTime' | 'availability'
 type SortDirection = 'asc' | 'desc'
 
+const { naiveTheme, isDark, toggleTheme } = useTheme()
+
 // NaiveUI Discrete API — 用于在模板外触发 message / dialog
+// configProviderProps 传 computed 而非字面量，否则弹窗内控件不会跟随主题切换
+const configProviderProps = computed(() => ({
+  theme: naiveTheme.value,
+  locale: zhCN,
+  dateLocale: dateZhCN
+}))
+
 const { message, dialog } = createDiscreteApi(['message', 'dialog'], {
-  configProviderProps: { theme: darkTheme, locale: zhCN, dateLocale: dateZhCN }
+  configProviderProps
 })
 
 // ── 账号列表 ────────────────────────────────────────────────
@@ -351,145 +362,97 @@ const handleClose = () => window.api.closeWindow()
 </script>
 
 <template>
-  <n-config-provider :locale="zhCN" :date-locale="dateZhCN" :theme="darkTheme">
+  <n-config-provider :locale="zhCN" :date-locale="dateZhCN" :theme="naiveTheme">
     <!-- 标题栏 -->
     <header class="app-header">
-      <div class="app-title" style="padding-left: 1.5rem">
-        <img
-          src="./assets/icon.png"
-          alt="logo"
-          style="
-            width: 22px;
-            height: 22px;
-            border-radius: 4px;
-            box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
-          "
-        />
+      <div class="app-title">
+        <!-- 内联而非 <img>：currentColor 才能跟随主题；位图版仅用于应用图标 -->
+        <svg
+          class="app-logo"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="5" y="3" width="14" height="18" rx="3" />
+          <path d="M9 9h6M9 13h6M9 17h3" />
+        </svg>
         PoroAuth <span class="tag">WeGame Edition</span>
       </div>
       <div class="window-controls">
-        <button class="win-btn" @click="handleMinimize">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
+        <button class="win-btn" title="最小化" @click="handleMinimize">
+          <Minus :size="14" />
         </button>
-        <button class="win-btn close-btn-win" @click="handleClose">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+        <button class="win-btn win-btn--close" title="关闭" @click="handleClose">
+          <X :size="14" />
         </button>
       </div>
     </header>
 
     <main class="app-main">
       <div class="content-wrapper">
-        <div class="section-title">
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-end;
-              margin-bottom: 0.5rem;
-            "
-          >
-            <div style="display: flex; align-items: center; gap: 0.75rem">
-              <h2 style="margin-bottom: 0">通行名册</h2>
+        <div class="page-head">
+          <div class="page-head__row">
+            <div class="page-head__title">
+              <h2 class="hero"><strong>PoroAuth</strong> 通行名册</h2>
               <button
                 v-if="hasUpdate"
                 class="update-badge"
                 title="有新版本可用，点击查看！"
                 @click="showUpdateModal = true"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="update-arrow-icon"
-                >
-                  <path d="M12 19V5" />
-                  <path d="M5 12l7-7 7 7" />
-                </svg>
+                <ArrowUp :size="13" class="update-badge__icon" />
                 有可用更新
               </button>
             </div>
-            <div style="display: flex; gap: 0.5rem">
-              <button
-                class="btn"
-                style="
-                  padding: 0.3rem 0.6rem;
-                  font-size: 0.8rem;
-                  background: rgba(255, 255, 255, 0.08);
-                  border: 1px solid rgba(255, 255, 255, 0.1);
-                  border-radius: 6px;
-                  cursor: pointer;
-                "
-                @click="showPathModal = true"
-              >
-                🔗 路径管理
+            <div class="tool-bar">
+              <button class="icon-btn" title="路径管理" @click="showPathModal = true">
+                <Link2 :size="18" />
+              </button>
+              <button class="icon-btn" title="坐标时序校正" @click="showConfigModal = true">
+                <Settings :size="18" />
               </button>
               <button
-                class="btn"
-                style="
-                  padding: 0.3rem 0.6rem;
-                  font-size: 0.8rem;
-                  background: rgba(255, 255, 255, 0.08);
-                  border: 1px solid rgba(255, 255, 255, 0.1);
-                  border-radius: 6px;
-                  cursor: pointer;
-                "
-                @click="showConfigModal = true"
+                class="icon-btn"
+                :title="isDark ? '切换到浅色主题' : '切换到深色主题'"
+                @click="toggleTheme"
               >
-                ⚙️ 坐标时序校正
+                <Sun v-if="isDark" :size="18" />
+                <Moon v-else :size="18" />
               </button>
             </div>
           </div>
-          <p>AES-256 本地加密直连，请确保 WeGame 与底层驱动已激活</p>
+          <p class="page-head__desc">AES-256 本地加密直连，请确保 WeGame 与底层驱动已激活</p>
         </div>
 
         <div class="sort-bar">
-          <div class="sort-group">
+          <div class="segmented">
             <button
-              class="sort-btn"
-              :class="{ active: sortMode === 'addTime' }"
+              class="segmented__item"
+              :class="{ 'segmented__item--active': sortMode === 'addTime' }"
               :title="`按添加时间${sortMode === 'addTime' && sortDirection === 'desc' ? '降序' : '升序'}排列`"
               @click="handleSort('addTime')"
             >
               添加时间
-              <span v-if="sortMode === 'addTime'" class="sort-direction" aria-hidden="true">
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
+              <template v-if="sortMode === 'addTime'">
+                <ArrowUp v-if="sortDirection === 'asc'" :size="14" class="segmented__arrow" />
+                <ArrowDown v-else :size="14" class="segmented__arrow" />
+              </template>
             </button>
             <button
-              class="sort-btn"
-              :class="{ active: sortMode === 'availability' }"
+              class="segmented__item"
+              :class="{ 'segmented__item--active': sortMode === 'availability' }"
               :title="`按可用性${sortMode === 'availability' && sortDirection === 'desc' ? '降序' : '升序'}排列`"
               @click="handleSort('availability')"
             >
               可用性
-              <span v-if="sortMode === 'availability'" class="sort-direction" aria-hidden="true">
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
+              <template v-if="sortMode === 'availability'">
+                <ArrowUp v-if="sortDirection === 'asc'" :size="14" class="segmented__arrow" />
+                <ArrowDown v-else :size="14" class="segmented__arrow" />
+              </template>
             </button>
           </div>
         </div>
@@ -575,19 +538,45 @@ const handleClose = () => window.api.closeWindow()
 </template>
 
 <style scoped>
+/* ── 标题栏 ── */
 .app-header {
   height: 48px;
   -webkit-app-region: drag;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(8px);
+  background: var(--bg-app);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 50;
+}
+
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding-left: var(--space-lg);
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.app-logo {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  color: var(--accent);
+}
+
+.tag {
+  padding: 2px var(--space-sm);
+  background: var(--accent-soft);
+  border-radius: var(--radius-full);
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 700;
 }
 
 .window-controls {
@@ -597,106 +586,36 @@ const handleClose = () => window.api.closeWindow()
 }
 
 .win-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
   width: 48px;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.win-btn svg {
-  width: 14px;
-  height: 14px;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
 }
 
 .win-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-inset);
   color: var(--text-primary);
 }
 
-.win-btn.close-btn-win:hover {
-  background: #e81123;
-  color: white;
+.win-btn--close:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
-.update-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.18rem 0.6rem 0.18rem 0.45rem;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  border-radius: 9999px;
-  color: #10b981;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  letter-spacing: 0.02em;
-  transition: all 0.2s ease;
-  animation: badgeFloat 3s ease-in-out infinite;
-  background-clip: padding-box;
-  -webkit-app-region: no-drag;
-}
-
-.update-badge:hover {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: rgba(16, 185, 129, 0.6);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
-  transform: scale(1.05);
-}
-
-.update-arrow-icon {
-  animation: arrowBounce 1.5s ease-in-out infinite;
-}
-
-@keyframes arrowBounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-2px);
-  }
-}
-
-@keyframes badgeFloat {
-  0%,
-  100% {
-    box-shadow: 0 0 4px rgba(16, 185, 129, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
-  }
-}
-
-.app-title {
-  font-weight: 600;
-  font-size: 1rem;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.tag {
-  font-size: 0.7rem;
-  padding: 0.2rem 0.5rem;
-  background: rgba(99, 102, 241, 0.2);
-  color: var(--accent-color);
-  border-radius: 4px;
-  font-weight: 700;
-}
-
+/* ── 主体 ── */
 .app-main {
   margin-top: 48px;
   height: calc(100vh - 48px);
   overflow-y: auto;
-  padding: 2rem;
+  padding: var(--space-xl);
 }
 
 .content-wrapper {
@@ -704,56 +623,148 @@ const handleClose = () => window.api.closeWindow()
   margin: 0 auto;
 }
 
-.section-title {
-  margin-bottom: 2rem;
+/* ── Hero ── */
+.page-head {
+  margin-bottom: var(--space-lg);
 }
 
-.section-title h2 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.section-title p {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
-.sort-group {
+.page-head__row {
   display: flex;
-  border-radius: 6px;
-  overflow: hidden;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
 }
 
-.sort-btn {
-  padding: 0.3rem 0.65rem;
-  font-size: 0.78rem;
-  background: rgba(255, 255, 255, 0.05);
+.page-head__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.hero {
+  font-size: var(--text-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.hero strong {
+  font-weight: 800;
+}
+
+.page-head__desc {
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+}
+
+/* ── 更新提示 chip ──
+   MASTER §6 禁纯装饰动画：原 badgeFloat / arrowBounce 无限循环已移除，
+   仅保留 hover 反馈。--success 压 --success-soft 仅 3.58:1，
+   故文字走 --text-primary，--success 只承载图标与描边（非文字，3:1 即可）。 */
+.update-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 3px var(--space-sm) 3px 6px;
+  background: var(--success-soft);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: box-shadow var(--duration) var(--ease);
+}
+
+.update-badge:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.update-badge__icon {
+  color: var(--success);
+}
+
+/* ── 圆形图标按钮 · MASTER §4.3 ── */
+.tool-bar {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
+  border-radius: var(--radius-full);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
 }
 
-.sort-direction {
-  display: inline-block;
-  width: 0.8rem;
-  margin-left: 0.15rem;
-  font-weight: 700;
-}
-
-.sort-btn + .sort-btn {
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sort-btn.active {
-  background: rgba(99, 102, 241, 0.25);
-  color: var(--accent-color);
-}
-
-.sort-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.1);
+.icon-btn:hover {
+  background: var(--bg-inset);
   color: var(--text-primary);
+}
+
+/* ── 胶囊分段控件 · MASTER §4.2 ── */
+.sort-bar {
+  margin-bottom: var(--space-md);
+}
+
+.segmented {
+  display: inline-flex;
+  gap: var(--space-xs);
+  padding: 4px;
+  background: var(--bg-inset);
+  border-radius: var(--radius-full);
+}
+
+.segmented__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-lg);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease);
+}
+
+.segmented__item:hover:not(.segmented__item--active) {
+  color: var(--text-primary);
+}
+
+.segmented__item--active {
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+}
+
+/* 深色下 --shadow-sm 为 none 且 --bg-surface 与 --bg-inset 亮度接近，
+   激活胶囊会糊进轨道 → 补一圈 inset 描边（不用 border，避免撑尺寸位移）。 */
+:root[data-theme='dark'] .segmented__item--active {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+.segmented__arrow {
+  flex: none;
 }
 </style>
