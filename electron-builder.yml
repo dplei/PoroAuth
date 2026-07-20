@@ -1,6 +1,11 @@
 appId: com.poroauth.app
 productName: PoroAuth
 compression: maximum
+# 把 RELEASE_NOTES.md 内容写进 latest.yml 的 releaseNotes 字段。
+# 这是应用「发现新版本」弹窗真正读取的来源（electron-updater 读 latest.yml，
+# 不读 GitHub Release 正文）。路径相对项目根解析（app-builder-lib getResource）。
+releaseInfo:
+  releaseNotesFile: RELEASE_NOTES.md
 directories:
   buildResources: build
 files:
