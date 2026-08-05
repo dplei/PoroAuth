@@ -11,6 +11,12 @@
 **设计拨盘：** Variance 3/10 (Centered/Minimal) | Motion 4/10 (Standard) | Density 5/10 (Standard)
 **视觉参照：** ISUX AI Hub —— 浅色底 + 纯白无边框卡片 + 柔和环境阴影 + 大标题混合字重 + 胶囊分段控件
 
+**页面级规范索引：**
+
+| 页面 | 规范 | 说明 |
+|------|------|------|
+| 系统设置 | [`pages/system-settings.md`](./pages/system-settings.md) | 覆盖通用弹窗宽度，规定 Tab、流程编辑器与设置草稿交互 |
+
 ---
 
 ## 0. 项目实际约束（覆盖检索默认值）
