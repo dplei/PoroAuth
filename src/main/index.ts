@@ -127,6 +127,17 @@ app.whenReady().then(() => {
     }
   })
 
+  ipcMain.handle(
+    'add-accounts',
+    (_, items: Array<{ name: string; account: string; pass: string }>) => {
+      try {
+        return { success: true, results: accountManager.addAccounts(items || []) }
+      } catch (e: any) {
+        return { success: false, error: e.message, results: [] }
+      }
+    }
+  )
+
   ipcMain.handle('delete-account', (_, id: string) => {
     accountManager.deleteAccount(id)
     return { success: true }

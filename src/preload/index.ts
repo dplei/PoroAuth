@@ -8,6 +8,8 @@ const api = {
   getAccounts: () => ipcRenderer.invoke('get-accounts'),
   addAccount: (name: string, acc: string, pass: string) =>
     ipcRenderer.invoke('add-account', name, acc, pass),
+  addAccounts: (items: Array<{ name: string; account: string; pass: string }>) =>
+    ipcRenderer.invoke('add-accounts', items),
   deleteAccount: (id: string) => ipcRenderer.invoke('delete-account', id),
   updateAccountName: (id: string, newName: string) => ipcRenderer.invoke('update-account-name', id, newName),
   updateLastLoginTime: (id: string, timestamp: number | null) =>

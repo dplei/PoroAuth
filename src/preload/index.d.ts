@@ -6,6 +6,7 @@ declare global {
     api: {
       getAccounts: () => Promise<Array<{ id: string, name: string, account: string, bannedUntil?: number | null, lastLoginTime?: number | null, createdAt?: number }>>
       addAccount: (name: string, acc: string, pass: string) => Promise<{ success: boolean, id?: string, error?: string }>
+      addAccounts: (items: Array<{ name: string, account: string, pass: string }>) => Promise<{ success: boolean, error?: string, results: Array<{ account: string, success: boolean, id?: string, error?: string }> }>
       deleteAccount: (id: string) => Promise<{ success: boolean }>
       updateAccountName: (id: string, newName: string) => Promise<{ success: boolean, error?: string }>
       updateLastLoginTime: (id: string, timestamp: number | null) => Promise<{ success: boolean, error?: string }>

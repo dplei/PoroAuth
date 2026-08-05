@@ -129,6 +129,43 @@ export class AccountManager {
     return newData.id
   }
 
+  // 批量添加：整批只写一次盘，逐条返回结果（单条失败不影响其余条目）
+  public addAccounts(items: Array<{ name: string; account: string; pass: string }>) {
+    const arr = this.loadAccounts()
+    const results: Array<{ account: string; success: boolean; id?: string; error?: string }> = []
+    let dirty = false
+
+    for (const item of items) {
+      const name = (item.name || '').trim()
+      const account = (item.account || '').trim()
+      const pass = item.pass || ''
+
+      if (!name || !account || !pass) {
+        results.push({ account, success: false, error: '备注名/账号/密码不能为空' })
+        continue
+      }
+      // arr 就是 memoryCache 本体，本批已 push 进去的条目也会被这里查到 → 批内重复一并拦掉
+      if (arr.some((a) => a.account === account)) {
+        results.push({ account, success: false, error: `账号 ${account} 已存在` })
+        continue
+      }
+
+      const newData: AccountData = {
+        id: crypto.randomUUID(),
+        name,
+        account,
+        passwordEncrypted: this.encrypt(pass),
+        createdAt: Date.now()
+      }
+      arr.push(newData)
+      dirty = true
+      results.push({ account, success: true, id: newData.id })
+    }
+
+    if (dirty) this.save()
+    return results
+  }
+
   public deleteAccount(id: string) {
     const arr = this.loadAccounts()
     this.memoryCache = arr.filter((a) => a.id !== id)
